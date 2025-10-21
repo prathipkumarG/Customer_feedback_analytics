@@ -1,0 +1,381 @@
+{
+  "name": "customer feedback Analytics",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Customer Feedback",
+        "formDescription": "Please give feedback about tour company or product",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "What is your feedback about?",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Product"
+                  },
+                  {
+                    "option": "Service"
+                  },
+                  {}
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Your feedback",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "How do we get touch with you?",
+              "placeholder": "email",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -1040,
+        64
+      ],
+      "id": "1355461b-effd-4ab9-8682-7eee80199a6a",
+      "name": "On form submission",
+      "webhookId": "2ca179b8-9e6a-4adf-b05c-08f4b1c80fd9"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=classify the sentiment in the following customer feedback:  {{  $json['Your feedback'] }}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -880,
+        -256
+      ],
+      "id": "480ecd77-d860-4163-89d4-0cd362ab92d9",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -608,
+        48
+      ],
+      "id": "8d68d9bd-915d-43f6-a65b-b0a47ffee242",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -864,
+        -112
+      ],
+      "id": "ce84e460-3b2a-4805-a613-9139ae0394ea",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "5k8GXmn8bPEmtTMm",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1ze_3t5w8zpPLAUsul-63DEZbVSnZZiJkTriK0kcgIrA/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ze_3t5w8zpPLAUsul-63DEZbVSnZZiJkTriK0kcgIrA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $json.submittedAt }}",
+            "Category": "={{ $json['What is your feedback about?'] }}",
+            "Customer Feedback": "={{ $json['Your feedback'] }}",
+            "Customer Name": "={{ $json.Name }}",
+            "Customer Contact": "={{ $json['How do we get touch with you?'] }}",
+            "Entered by": "form",
+            "Sentiment": "={{ $('Basic LLM Chain').item.json.text }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Feedback",
+              "displayName": "Customer Feedback",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Contact",
+              "displayName": "Customer Contact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Entered by",
+              "displayName": "Entered by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Urgent?",
+              "displayName": "Urgent?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sentiment",
+              "displayName": "Sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -304,
+        48
+      ],
+      "id": "50b711ed-d644-41e3-9fd4-d7fe74159404",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ZK4Sb8KB44hUYvU4",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a concise email response without a subjectline, to the feedback provided in the Customer Feedback Form: [{{ $json[ 'Your feedback'] }}].\n\nFor Positive Feedback ([{{ $json.text }}]): Craft a short, ware email thanking the customer [{{ $json. Name }}] for taking the tine to share their thoughts. Express genuine appreciation for their support.\n\nFor Negative Feedback ([{{$json.text }}]): Write a thoughtful, empathetic email thanking the customer [{{ $json.Name }}] for their valuable input. Show sincere interest in their perspective by asking how we can improve our services or products. Additionally, include a special offer code for a 20% discount on their next purchase as a gesture of goodwill.\n\nAlways conclude the email with the signature of the Founder and CEO:\n\n\"The AI Agent Guy\"",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -400,
+        -256
+      ],
+      "id": "c29db46b-da9c-4cd6-98ba-11284d444c7a",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        -80
+      ],
+      "id": "a75de5db-ebdc-493a-ba31-5daa37b6abc2",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "5k8GXmn8bPEmtTMm",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Merge').item.json['How do we get touch with you?'] }}",
+        "subject": "Thankyou for your feedback.",
+        "emailType": "text",
+        "message": "={{ $json.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -96,
+        -176
+      ],
+      "id": "dddf53d1-77d3-4a12-a7a6-98f4eabc9b10",
+      "name": "Send a message",
+      "webhookId": "543d2323-648b-43e5-9404-161d7b681cbe",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Dn4TglCQLIxBvuVG",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1a140b90-9ad9-4b8d-8a3c-d4ec27397fc9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "59f88240b6098ff438f11e1b46b11cff8b4ed09cc2b8a067c28f3dbc5d8b04ea"
+  },
+  "id": "8DY2PRgdfiIRwz32",
+  "tags": []
+}
